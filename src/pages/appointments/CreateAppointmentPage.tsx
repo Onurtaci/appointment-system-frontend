@@ -26,6 +26,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import * as yup from "yup";
 import { appointmentService } from "../../services/appointmentService";
+import { doctorScheduleService } from "../../services/doctorScheduleService";
 import { userService } from "../../services/userService";
 import type { AppDispatch, RootState } from "../../store";
 import { createAppointment } from "../../store/slices/appointmentSlice";
@@ -152,7 +153,7 @@ const CreateAppointmentPage: React.FC = () => {
       if (!formik.values.doctorId || !selectedDate) return;
 
       try {
-        const schedules = await userService.getDoctorSchedule(
+        const schedules = await doctorScheduleService.getDoctorSchedule(
           formik.values.doctorId
         );
 
@@ -161,9 +162,11 @@ const CreateAppointmentPage: React.FC = () => {
         localDate.setHours(0, 0, 0, 0);
         const dayOfWeek = localDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
-        const schedule = schedules.find((s) => {
-          // Convert backend's DayOfWeek enum to number for comparison
-          const scheduleDayNumber = [
+        const schedule = schedules.find((s: ScheduleView) => {
+          // Convert JavaScript's getDay() (0=Sunday, 1=Monday) to backend's DayOfWeek string enum
+          // JavaScript: 0=Sunday, 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday
+          // Backend: MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY
+          const dayNames = [
             "SUNDAY",
             "MONDAY",
             "TUESDAY",
@@ -171,8 +174,9 @@ const CreateAppointmentPage: React.FC = () => {
             "THURSDAY",
             "FRIDAY",
             "SATURDAY",
-          ].indexOf(s.dayOfWeek.toString());
-          return scheduleDayNumber === dayOfWeek;
+          ];
+          const selectedDayName = dayNames[dayOfWeek];
+          return s.dayOfWeek === selectedDayName;
         });
 
         setDoctorSchedule(schedule || null);

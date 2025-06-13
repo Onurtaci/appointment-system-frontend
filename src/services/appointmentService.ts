@@ -300,9 +300,74 @@ export const appointmentService = {
   },
 
   async getBookedTimeSlots(doctorId: string, date: string): Promise<string[]> {
-    const response = await api.get(`/appointments/booked-slots`, {
-      params: { doctorId, date }
-    });
-    return response.data;
+    try {
+      const response = await api.get(`/appointments/booked-slots`, {
+        params: { doctorId, date }
+      });
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+
+        switch (status) {
+          case 400:
+            throw new AppointmentServiceError(
+              errorData?.message || 'Invalid parameters',
+              status,
+              'INVALID_INPUT'
+            );
+          case 404:
+            throw new AppointmentServiceError(
+              getFormattedErrorMessage('DOCTOR', 'NOT_FOUND'),
+              status,
+              'DOCTOR_NOT_FOUND'
+            );
+          default:
+            throw new AppointmentServiceError(
+              getHttpErrorMessage(status || 500, errorData?.message),
+              status,
+              'APPT_FETCH_FAILED'
+            );
+        }
+      }
+      throw new AppointmentServiceError(getFormattedErrorMessage('APPOINTMENT', 'FETCH_FAILED'));
+    }
+  },
+
+  async getAvailableTimeSlots(doctorId: string, date: string): Promise<string[]> {
+    try {
+      const response = await api.get(`/appointments/available-slots`, {
+        params: { doctorId, date }
+      });
+      return response.data;
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
+        const errorData = error.response?.data;
+
+        switch (status) {
+          case 400:
+            throw new AppointmentServiceError(
+              errorData?.message || 'Invalid parameters',
+              status,
+              'INVALID_INPUT'
+            );
+          case 404:
+            throw new AppointmentServiceError(
+              getFormattedErrorMessage('DOCTOR', 'NOT_FOUND'),
+              status,
+              'DOCTOR_NOT_FOUND'
+            );
+          default:
+            throw new AppointmentServiceError(
+              getHttpErrorMessage(status || 500, errorData?.message),
+              status,
+              'APPT_FETCH_FAILED'
+            );
+        }
+      }
+      throw new AppointmentServiceError(getFormattedErrorMessage('APPOINTMENT', 'FETCH_FAILED'));
+    }
   }
 }; 

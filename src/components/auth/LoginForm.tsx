@@ -13,19 +13,8 @@ import {
 import { useFormik } from "formik";
 import React, { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import * as yup from "yup";
 import type { LoginFormData, LoginFormProps } from "../../types/auth";
-
-const validationSchema = yup.object({
-  email: yup
-    .string()
-    .email("Please enter a valid email address")
-    .required("Email is required"),
-  password: yup
-    .string()
-    .min(6, "Password should be at least 6 characters")
-    .required("Password is required"),
-});
+import { loginSchema } from "../../utils/validation";
 
 export const LoginForm: React.FC<LoginFormProps> = ({
   onSubmit,
@@ -40,7 +29,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({
       email: "",
       password: "",
     },
-    validationSchema,
+    validationSchema: loginSchema,
     onSubmit: async (values) => {
       await onSubmit(values);
     },

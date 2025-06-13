@@ -1,6 +1,5 @@
-import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { ErrorMessages, getHttpErrorMessage } from '../common/constants/errorMessages';
-import type { ScheduleView } from '../types';
 import type { User } from '../types/auth';
 import api from './api';
 
@@ -101,24 +100,6 @@ export const userService = {
         }
       }
       throw new UserServiceError(ErrorMessages.USER.UPDATE_FAILED);
-    }
-  },
-
-  async getDoctorSchedule(doctorId: string): Promise<ScheduleView[]> {
-    try {
-      const response = await api.get<ScheduleView[]>(`/doctor-schedules/${doctorId}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new UserServiceError("Doctor not found");
-        }
-        if (error.response?.status === 403) {
-          throw new UserServiceError("You are not authorized for this operation");
-        }
-        throw new UserServiceError(error.response?.data?.message || "Failed to get doctor's schedule");
-      }
-      throw new UserServiceError("An unexpected error occurred");
     }
   },
 }; 

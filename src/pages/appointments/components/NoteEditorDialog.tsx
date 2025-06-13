@@ -30,6 +30,7 @@ interface NoteEditorDialogProps {
   isEditing: boolean;
   onStartEditing: () => void;
   userName: string;
+  userRole: "DOCTOR" | "PATIENT";
   formatDateTime: (dateTimeStr: string) => { date: string; time: string };
   getStatusColor: (
     status: string
@@ -48,11 +49,12 @@ export const NoteEditorDialog = ({
   isEditing,
   onStartEditing,
   userName,
+  userRole,
   formatDateTime,
   getStatusColor,
 }: NoteEditorDialogProps) => {
   const { date, time } = formatDateTime(appointment.appointmentTime);
-  const isDoctor = appointment.status === "APPROVED";
+  const isDoctor = userRole === "DOCTOR";
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>

@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import type { ApiError } from '../types';
 
 // Extend the Axios config type to include our retry count
 declare module 'axios' {
@@ -34,7 +35,7 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
-  async (error: AxiosError) => {
+  async (error: AxiosError<ApiError>) => {
     const config = error.config;
     
     // Handle authentication errors

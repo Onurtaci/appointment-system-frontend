@@ -382,6 +382,7 @@ const AppointmentListPage = () => {
                 : (selectedAppointment as AppointmentPatientView).doctorId
             ] || "Loading..."
           }
+          userRole={user?.role as "DOCTOR" | "PATIENT"}
           formatDateTime={formatDateTime}
           getStatusColor={getStatusColor}
         />
