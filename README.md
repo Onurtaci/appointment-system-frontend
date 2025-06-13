@@ -1,4 +1,4 @@
-# Medical Appointment System - Frontend
+# Appointment System - Frontend
 
 A React-based frontend application for managing medical appointments between doctors and patients.
 
@@ -8,24 +8,24 @@ A React-based frontend application for managing medical appointments between doc
 - User authentication and authorization
 - Role-based access control (Doctor/Patient)
 - Appointment management (create, update, cancel, approve, reject)
-- Doctor schedule management
+- Doctor schedule management with calendar view
 - Medical notes for appointments
 - Real-time updates
-- Form validation
-- Error handling
+- Form validation with Formik & Yup
+- Error handling and user feedback
 
 ## Tech Stack
 
-- React 18
-- TypeScript
-- Material-UI (MUI)
-- Redux Toolkit
-- React Router v6
-- Axios
-- Vite
-- Formik & Yup
-- React Toastify
-- Date-fns
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Material-UI (MUI)** - UI components
+- **Redux Toolkit** - State management
+- **React Router v6** - Page routing
+- **Axios** - HTTP requests
+- **Vite** - Build tool
+- **Formik & Yup** - Form management and validation
+- **React Toastify** - Notifications
+- **Date-fns** - Date manipulation
 
 ## Prerequisites
 
@@ -45,7 +45,7 @@ A React-based frontend application for managing medical appointments between doc
    npm install
    ```
 
-3. Create a `.env` file in the root directory with the following variables:
+3. Create a `.env` file in the root directory:
    ```env
    VITE_API_URL=http://localhost:8080
    ```
@@ -70,7 +70,10 @@ The application will start on `http://localhost:3000`
 ```
 src/
 ├── components/     # Reusable components
+│   ├── auth/      # Authentication components
+│   └── ...        # Other components
 ├── pages/         # Page components
+│   └── appointments/ # Appointment-related pages
 ├── services/      # API services
 ├── store/         # Redux store
 ├── types/         # TypeScript types
@@ -90,6 +93,10 @@ VITE_API_URL=http://localhost:8080
 VITE_ENABLE_MOCK_API=false
 ```
 
+## API Integration
+
+This frontend application integrates with the Appointment System Backend API. Make sure the backend is running on the configured URL before starting the frontend.
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
