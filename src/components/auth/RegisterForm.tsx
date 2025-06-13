@@ -18,38 +18,8 @@ import {
 import { useFormik } from "formik";
 import React, { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import * as yup from "yup";
 import type { RegisterFormData, RegisterFormProps } from "../../types/auth";
-
-const validationSchema = yup.object({
-  firstName: yup
-    .string()
-    .min(2, "First name should be at least 2 characters")
-    .max(50, "First name should not exceed 50 characters")
-    .required("First name is required"),
-  lastName: yup
-    .string()
-    .min(2, "Last name should be at least 2 characters")
-    .max(50, "Last name should not exceed 50 characters")
-    .required("Last name is required"),
-  email: yup
-    .string()
-    .email("Please enter a valid email address")
-    .required("Email is required"),
-  password: yup
-    .string()
-    .min(6, "Password should be at least 6 characters")
-    .matches(/^\d+$/, "Password must contain only numbers")
-    .required("Password is required"),
-  confirmPassword: yup
-    .string()
-    .oneOf([yup.ref("password")], "Passwords must match")
-    .required("Confirm password is required"),
-  role: yup
-    .string()
-    .oneOf(["PATIENT", "DOCTOR"], "Please select a valid role")
-    .required("Role is required"),
-});
+import { registerSchema } from "../../utils/validation";
 
 export const RegisterForm: React.FC<RegisterFormProps> = ({
   onSubmit,
@@ -69,7 +39,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
       confirmPassword: "",
       role: "" as "PATIENT" | "DOCTOR",
     },
-    validationSchema,
+    validationSchema: registerSchema,
     onSubmit: async (values) => {
       const submitData = {
         firstName: values.firstName,
