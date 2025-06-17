@@ -1,6 +1,5 @@
 import { FilterAlt, FilterList, History } from "@mui/icons-material";
 import {
-  Alert,
   Box,
   Button,
   Card,
@@ -34,10 +33,9 @@ import { tr } from "date-fns/locale";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { userService, UserServiceError } from "../../services/userService";
 import type { AppDispatch, RootState } from "../../store";
 import { fetchPatientAppointments } from "../../store/slices/appointmentSlice";
-import type { AppointmentPatientView, User } from "../../types/index";
+import type { AppointmentPatientView } from "../../types/index";
 
 interface FilterState {
   startDate: Date | null;
@@ -61,9 +59,6 @@ const AppointmentHistoryPage = () => {
   );
 
   // State management
-  const [userDetails, setUserDetails] = useState<Record<string, string>>({});
-  const [userDetailsError, setUserDetailsError] = useState<string | null>(null);
-  const [failedUserIds, setFailedUserIds] = useState<Set<string>>(new Set());
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentPatientView | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -74,32 +69,6 @@ const AppointmentHistoryPage = () => {
     status: "all",
     searchTerm: "",
   });
-
-  // Memoized user name getter
-  const getUserName = useCallback(
-    async (userId: string) => {
-      if (userDetails[userId]) return userDetails[userId];
-      if (failedUserIds.has(userId)) return "User not found";
-
-      try {
-        const user = await userService.getUserById(userId);
-        setUserDetails((prev) => ({
-          ...prev,
-          [userId]: `${user.firstName} ${user.lastName}`,
-        }));
-        return `${user.firstName} ${user.lastName}`;
-      } catch (error) {
-        console.error("Failed to fetch user details:", error);
-        setFailedUserIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.add(userId);
-          return newSet;
-        });
-        return "User not found";
-      }
-    },
-    [userDetails, failedUserIds]
-  );
 
   // Utility functions
   const getStatusColor = useCallback((status: string) => {
@@ -191,7 +160,9 @@ const AppointmentHistoryPage = () => {
     if (filters.searchTerm) {
       const searchLower = filters.searchTerm.toLowerCase();
       filtered = filtered.filter((app: AppointmentPatientView) => {
-        const doctorName = userDetails[app.doctorId]?.toLowerCase() || "";
+        const doctorName = app.doctor
+          ? `${app.doctor.firstName} ${app.doctor.lastName}`.toLowerCase()
+          : "";
         return doctorName.includes(searchLower);
       });
     }
@@ -202,75 +173,7 @@ const AppointmentHistoryPage = () => {
         new Date(b.appointmentTime).getTime() -
         new Date(a.appointmentTime).getTime()
     );
-  }, [appointments, filters, userDetails]);
-
-  // Memoized unique doctor IDs
-  const uniqueDoctorIds = useMemo(() => {
-    const doctorIds = filteredAppointments
-      .map((appointment) => (appointment as AppointmentPatientView).doctorId)
-      .filter((id): id is string => id !== undefined);
-    return [...new Set(doctorIds)];
-  }, [filteredAppointments]);
-
-  // Fetch doctor details
-  useEffect(() => {
-    const fetchDoctorDetails = async () => {
-      if (uniqueDoctorIds.length === 0) return;
-
-      const details: Record<string, User> = {};
-      const newFailedIds = new Set<string>();
-      let hasError = false;
-
-      const currentFailedIds = new Set(failedUserIds);
-
-      const fetchPromises = uniqueDoctorIds
-        .filter((id) => !currentFailedIds.has(id) && !userDetails[id])
-        .map(async (id) => {
-          try {
-            const userDetail = await userService.getUserById(id);
-            details[id] = userDetail;
-          } catch (error) {
-            newFailedIds.add(id);
-            hasError = true;
-
-            if (error instanceof UserServiceError) {
-              if (error.code === "USER_NOT_FOUND") {
-                // Silent handling for not found users
-              } else if (error.code === "SERVER_ERROR") {
-                setUserDetailsError(
-                  "Server error while loading doctor details. Some information may be incomplete."
-                );
-              }
-            }
-          }
-        });
-
-      try {
-        await Promise.all(fetchPromises);
-
-        if (Object.keys(details).length > 0) {
-          const stringDetails = Object.entries(details).reduce(
-            (acc, [id, user]) => ({
-              ...acc,
-              [id]: `${user.firstName} ${user.lastName}`,
-            }),
-            {} as Record<string, string>
-          );
-          setUserDetails((prev) => ({ ...prev, ...stringDetails }));
-        }
-        if (newFailedIds.size > 0) {
-          setFailedUserIds((prev) => new Set([...prev, ...newFailedIds]));
-        }
-        if (!hasError) {
-          setUserDetailsError(null);
-        }
-      } catch {
-        setUserDetailsError("Failed to load doctor details");
-      }
-    };
-
-    fetchDoctorDetails();
-  }, [uniqueDoctorIds, failedUserIds, userDetails]);
+  }, [appointments, filters]);
 
   // Event handlers
   const handleAppointmentClick = useCallback(
@@ -305,10 +208,10 @@ const AppointmentHistoryPage = () => {
   // Dialog component
   const AppointmentDetailsDialog = useCallback(() => {
     if (!selectedAppointment) return null;
-
     const { date, time } = formatDateTime(selectedAppointment.appointmentTime);
-    const doctorName = getUserName(selectedAppointment.doctorId);
-
+    const doctorName = selectedAppointment.doctor
+      ? `${selectedAppointment.doctor.firstName} ${selectedAppointment.doctor.lastName}`
+      : "Unknown User";
     return (
       <Dialog
         open={isDialogOpen}
@@ -342,7 +245,7 @@ const AppointmentHistoryPage = () => {
                 Doctor
               </Typography>
               <Typography variant="body1" gutterBottom>
-                {userDetails[selectedAppointment.doctorId] || "Loading..."}
+                {doctorName}
               </Typography>
             </Box>
 
@@ -418,10 +321,8 @@ const AppointmentHistoryPage = () => {
     selectedAppointment,
     isDialogOpen,
     handleCloseDialog,
-    getUserName,
     formatDateTime,
     getStatusColor,
-    userDetails,
   ]);
 
   // Loading state component
@@ -607,16 +508,6 @@ const AppointmentHistoryPage = () => {
           </Stack>
         </Box>
 
-        {userDetailsError && (
-          <Alert
-            severity="warning"
-            sx={{ mb: 2 }}
-            onClose={() => setUserDetailsError(null)}
-          >
-            {userDetailsError}
-          </Alert>
-        )}
-
         <FilterPanel />
 
         <Divider sx={{ my: 2 }} />
@@ -650,7 +541,9 @@ const AppointmentHistoryPage = () => {
                       <Grid item xs={12} sm={8}>
                         <Stack spacing={1}>
                           <Typography variant="h6" component="div">
-                            {userDetails[appointment.doctorId] || "Loading..."}
+                            {appointment.doctor
+                              ? `${appointment.doctor.firstName} ${appointment.doctor.lastName}`
+                              : "Unknown User"}
                           </Typography>
                           <Typography color="text.secondary">
                             {(() => {

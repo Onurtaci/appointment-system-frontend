@@ -74,12 +74,12 @@ const AppointmentListPage = () => {
     const userIds = appointments
       .map((appointment: AppointmentDoctorView | AppointmentPatientView) => {
         if (user?.role === "DOCTOR") {
-          return (appointment as AppointmentDoctorView).patientId;
+          return (appointment as AppointmentDoctorView).patient?.id;
         } else {
-          return (appointment as AppointmentPatientView).doctorId;
+          return (appointment as AppointmentPatientView).doctor?.id;
         }
       })
-      .filter((id: string | undefined): id is string => id !== undefined);
+      .filter((id: string | undefined): id is string => !!id);
 
     return Array.from(new Set(userIds)) as string[];
   }, [appointments, user?.role]);
@@ -114,8 +114,8 @@ const AppointmentListPage = () => {
       filtered = filtered.filter((app) => {
         const userId =
           user?.role === "DOCTOR"
-            ? (app as AppointmentDoctorView).patientId
-            : (app as AppointmentPatientView).doctorId;
+            ? (app as AppointmentDoctorView).patient?.id
+            : (app as AppointmentPatientView).doctor?.id;
         if (!userId) return false;
         return userDetailsMap[userId]?.toLowerCase().includes(searchLower);
       });
@@ -272,6 +272,24 @@ const AppointmentListPage = () => {
     setNoteError(null);
   }, []);
 
+  // Dialog için userName'i seçili randevuya göre oluştur
+  let dialogUserName = "Unknown User";
+  if (selectedAppointment) {
+    if (
+      user?.role === "DOCTOR" &&
+      (selectedAppointment as AppointmentDoctorView).patient
+    ) {
+      const patient = (selectedAppointment as AppointmentDoctorView).patient;
+      dialogUserName = `${patient.firstName} ${patient.lastName}`;
+    } else if (
+      user?.role === "PATIENT" &&
+      (selectedAppointment as AppointmentPatientView).doctor
+    ) {
+      const doctor = (selectedAppointment as AppointmentPatientView).doctor;
+      dialogUserName = `${doctor.firstName} ${doctor.lastName}`;
+    }
+  }
+
   return (
     <Box>
       {(loadingStates.appointments || loadingStates.userDetails) && (
@@ -335,14 +353,20 @@ const AppointmentListPage = () => {
         ) : (
           <Grid container spacing={2}>
             {filteredAppointments.map((appointment) => {
-              const userId =
-                user?.role === "DOCTOR"
-                  ? (appointment as AppointmentDoctorView).patientId
-                  : (appointment as AppointmentPatientView).doctorId;
-              const userName = userId
-                ? userDetailsMap[userId] || "Loading..."
-                : "Unknown User";
-
+              let userName = "Unknown User";
+              if (
+                user?.role === "DOCTOR" &&
+                (appointment as AppointmentDoctorView).patient
+              ) {
+                const patient = (appointment as AppointmentDoctorView).patient;
+                userName = `${patient.firstName} ${patient.lastName}`;
+              } else if (
+                user?.role === "PATIENT" &&
+                (appointment as AppointmentPatientView).doctor
+              ) {
+                const doctor = (appointment as AppointmentPatientView).doctor;
+                userName = `${doctor.firstName} ${doctor.lastName}`;
+              }
               return (
                 <Grid item xs={12} key={appointment.id}>
                   <AppointmentCard
@@ -375,13 +399,7 @@ const AppointmentListPage = () => {
           error={noteError}
           isEditing={isEditingNote}
           onStartEditing={handleStartEditingNote}
-          userName={
-            userDetailsMap[
-              user?.role === "DOCTOR"
-                ? (selectedAppointment as AppointmentDoctorView).patientId
-                : (selectedAppointment as AppointmentPatientView).doctorId
-            ] || "Loading..."
-          }
+          userName={dialogUserName}
           userRole={user?.role as "DOCTOR" | "PATIENT"}
           formatDateTime={formatDateTime}
           getStatusColor={getStatusColor}

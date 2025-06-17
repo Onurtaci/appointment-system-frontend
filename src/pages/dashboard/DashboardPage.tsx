@@ -26,17 +26,21 @@ const DashboardPage: React.FC = () => {
           const appointments =
             await appointmentService.getMyDoctorAppointments();
           await dispatch(fetchDoctorAppointments(appointments));
-        } else {
+        } else if (user?.role === "PATIENT") {
           const appointments = await appointmentService.getMyAppointments();
           await dispatch(fetchPatientAppointments(appointments));
         }
+        // If user role is not DOCTOR or PATIENT, don't fetch appointments
       } catch (error) {
         console.error("Failed to fetch appointments:", error);
       }
     };
 
-    fetchAppointments();
-  }, [dispatch, user?.role]);
+    // Only fetch appointments if user is logged in and has a valid role
+    if (user?.role) {
+      fetchAppointments();
+    }
+  }, [dispatch, user?.role, user?.id]);
 
   // Memoize filtered appointments to prevent unnecessary recalculations
   const { pendingAppointments, upcomingAppointments } = useMemo(() => {

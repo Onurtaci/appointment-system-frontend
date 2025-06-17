@@ -33,26 +33,6 @@ import { createAppointment } from "../../store/slices/appointmentSlice";
 import type { ScheduleView } from "../../types";
 import type { User } from "../../types/auth";
 
-// Time slots for display (30-minute intervals)
-const TIME_SLOTS = [
-  "09:00",
-  "09:30",
-  "10:00",
-  "10:30",
-  "11:00",
-  "11:30",
-  "13:00",
-  "13:30",
-  "14:00",
-  "14:30",
-  "15:00",
-  "15:30",
-  "16:00",
-  "16:30",
-  "17:00",
-  "17:30",
-];
-
 const validationSchema = yup.object().shape({
   doctorId: yup.string().required("Doctor selection is required"),
   timeSlot: yup.string().required("Appointment time selection is required"),
@@ -191,8 +171,7 @@ const CreateAppointmentPage: React.FC = () => {
 
   // Get available time slots based on doctor's schedule and booked slots
   const getAvailableTimeSlots = useCallback(async () => {
-    if (!selectedDate || !formik.values.doctorId || !doctorSchedule) return;
-
+    if (!selectedDate || !formik.values.doctorId) return;
     setLoadingTimeSlots(true);
     try {
       // Convert selected date to local date string (YYYY-MM-DD)
@@ -200,57 +179,19 @@ const CreateAppointmentPage: React.FC = () => {
         selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
       );
       const dateStr = localDate.toISOString().split("T")[0];
-
-      const bookedSlots = await appointmentService.getBookedTimeSlots(
+      // Backend'den dinamik slotları çek
+      const slots = await appointmentService.getAvailableTimeSlots(
         formik.values.doctorId,
         dateStr
       );
-
-      // Filter out booked slots and slots outside working hours
-      const available = TIME_SLOTS.filter((slot) => {
-        const [hours, minutes] = slot.split(":").map(Number);
-
-        // Create time objects for comparison using the local date
-        const slotTime = new Date(localDate);
-        slotTime.setHours(hours, minutes, 0, 0);
-
-        // Parse doctor's schedule times
-        const [startHours, startMinutes] = doctorSchedule.startTime
-          .split(":")
-          .map(Number);
-        const [endHours, endMinutes] = doctorSchedule.endTime
-          .split(":")
-          .map(Number);
-
-        const startTime = new Date(localDate);
-        startTime.setHours(startHours, startMinutes, 0, 0);
-
-        const endTime = new Date(localDate);
-        endTime.setHours(endHours, endMinutes, 0, 0);
-
-        // Compare times using getTime() for accurate comparison
-        const isWithinWorkingHours =
-          slotTime.getTime() >= startTime.getTime() &&
-          slotTime.getTime() <= endTime.getTime();
-
-        // Check if the slot is during lunch break (12:00-13:00)
-        const isLunchBreak = hours === 12 || (hours === 12 && minutes === 30);
-        const isNotLunchBreak = !isLunchBreak;
-
-        // Check if the slot is booked
-        const isNotBooked = !bookedSlots.includes(slot);
-
-        return isWithinWorkingHours && isNotBooked && isNotLunchBreak;
-      });
-
-      setAvailableTimeSlots(available);
+      setAvailableTimeSlots(slots);
     } catch (error) {
       console.error("Failed to fetch available time slots:", error);
       setAvailableTimeSlots([]);
     } finally {
       setLoadingTimeSlots(false);
     }
-  }, [selectedDate, formik.values.doctorId, doctorSchedule]);
+  }, [selectedDate, formik.values.doctorId]);
 
   // Update available time slots when date or doctor schedule changes
   useEffect(() => {
@@ -353,8 +294,8 @@ const CreateAppointmentPage: React.FC = () => {
                       </Box>
                     ) : (
                       <Grid container spacing={1}>
-                        {TIME_SLOTS.map((slot) => {
-                          const isAvailable = availableTimeSlots.includes(slot);
+                        {availableTimeSlots.map((slot) => {
+                          const isAvailable = true;
                           const isSelected = formik.values.timeSlot === slot;
                           return (
                             <Grid item xs={6} sm={4} md={3} key={slot}>
@@ -394,14 +335,6 @@ const CreateAppointmentPage: React.FC = () => {
                                 }}
                               >
                                 <Typography variant="body1">{slot}</Typography>
-                                {!isAvailable && (
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                  >
-                                    Booked
-                                  </Typography>
-                                )}
                               </Paper>
                             </Grid>
                           );
