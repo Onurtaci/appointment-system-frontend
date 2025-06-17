@@ -8,6 +8,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import {
   AppBar,
   Box,
+  Button,
   CssBaseline,
   Drawer,
   IconButton,
@@ -21,6 +22,7 @@ import {
 import type { ReactNode } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import CalendarIcon from "../../../public/calendar.svg";
 import type { RootState } from "../../store";
 
 const drawerWidth = 240;
@@ -61,9 +63,28 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
       >
         <Toolbar>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            Appointment System
-          </Typography>
+          <Button
+            onClick={() => navigate("/dashboard")}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              color: "inherit",
+              textTransform: "none",
+              p: 0,
+              mr: 2,
+            }}
+            disableRipple
+          >
+            <img
+              src={CalendarIcon}
+              alt="Logo"
+              style={{ width: 32, height: 32, marginRight: 12 }}
+            />
+            <Typography variant="h6" noWrap component="div">
+              Appointment System
+            </Typography>
+          </Button>
+          <Box sx={{ flexGrow: 1 }} />
           <Typography variant="subtitle1" sx={{ mr: 2 }}>
             {user?.firstName} {user?.lastName}
           </Typography>

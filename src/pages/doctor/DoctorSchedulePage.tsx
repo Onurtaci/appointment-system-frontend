@@ -111,11 +111,15 @@ const DoctorSchedulePage = () => {
 
       if (editingSchedule) {
         await doctorScheduleService.updateSchedule(
+          user?.id || "",
           editingSchedule.id,
           scheduleData
         );
       } else {
-        await doctorScheduleService.createSchedule(scheduleData);
+        await doctorScheduleService.createSchedule(
+          user?.id || "",
+          scheduleData
+        );
       }
       await fetchSchedules();
       resetForm();
@@ -136,7 +140,7 @@ const DoctorSchedulePage = () => {
 
     setLoading(true);
     try {
-      await doctorScheduleService.deleteSchedule(id);
+      await doctorScheduleService.deleteSchedule(user?.id || "", id);
       await fetchSchedules();
     } catch (err) {
       if (err instanceof AxiosError) {

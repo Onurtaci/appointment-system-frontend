@@ -111,7 +111,7 @@ const DoctorScheduleCalendar: React.FC<DoctorScheduleCalendarProps> = ({
       return;
 
     try {
-      await doctorScheduleService.deleteSchedule(scheduleId);
+      await doctorScheduleService.deleteSchedule(doctorId, scheduleId);
       await fetchSchedules();
       onScheduleUpdate?.();
     } catch (err) {
@@ -133,11 +133,12 @@ const DoctorScheduleCalendar: React.FC<DoctorScheduleCalendarProps> = ({
 
       if (editingSchedule) {
         await doctorScheduleService.updateSchedule(
+          doctorId,
           editingSchedule.id,
           scheduleData
         );
       } else {
-        await doctorScheduleService.createSchedule(scheduleData);
+        await doctorScheduleService.createSchedule(doctorId, scheduleData);
       }
 
       await fetchSchedules();

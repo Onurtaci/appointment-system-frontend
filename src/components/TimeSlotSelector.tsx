@@ -39,69 +39,35 @@ const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Generate time slots from 09:00 to 17:30 with 30-minute intervals
-  const generateTimeSlots = (): TimeSlot[] => {
-    const slots: TimeSlot[] = [];
-    const startHour = 9;
-    const endHour = 17;
-    const interval = 30;
-
-    for (let hour = startHour; hour <= endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += interval) {
-        // Skip lunch break (12:00-13:00)
-        if (hour === 12 && minute >= 0) continue;
-
-        const timeString = `${hour.toString().padStart(2, "0")}:${minute
-          .toString()
-          .padStart(2, "0")}`;
-        slots.push({
-          time: timeString,
-          available: true,
-        });
-      }
-    }
-    return slots;
-  };
-
   useEffect(() => {
-    const fetchBookedSlots = async () => {
+    const fetchAvailableSlots = async () => {
       if (!selectedDate || !doctorId) {
-        setTimeSlots(generateTimeSlots());
+        setTimeSlots([]);
         return;
       }
-
       setLoading(true);
       setError(null);
-
       try {
         // Convert selected date to local date string (YYYY-MM-DD)
         const localDate = new Date(
           selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000
         );
         const dateStr = localDate.toISOString().split("T")[0];
-
-        const bookedSlots = await appointmentService.getBookedTimeSlots(
+        // Backend'den available slotları çek
+        const slots = await appointmentService.getAvailableTimeSlots(
           doctorId,
           dateStr
         );
-
-        const allSlots = generateTimeSlots();
-        const updatedSlots = allSlots.map((slot) => ({
-          ...slot,
-          available: !bookedSlots.includes(slot.time),
-        }));
-
-        setTimeSlots(updatedSlots);
+        setTimeSlots(slots.map((slot) => ({ time: slot, available: true })));
       } catch (err) {
-        console.error("Failed to fetch booked slots:", err);
+        console.error("Failed to fetch available slots:", err);
         setError("Failed to load available time slots");
-        setTimeSlots(generateTimeSlots());
+        setTimeSlots([]);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchBookedSlots();
+    fetchAvailableSlots();
   }, [selectedDate, doctorId]);
 
   const handleTimeSlotClick = (timeSlot: string) => {
